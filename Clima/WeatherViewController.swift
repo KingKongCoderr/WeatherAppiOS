@@ -12,20 +12,27 @@ import Alamofire
 import SwiftyJSON
 
 
-class WeatherViewController: UIViewController, CLLocationManagerDelegate {
+class WeatherViewController: UIViewController, CLLocationManagerDelegate, ChangeCityDelegate {
+    func userEnteredANewCityName(cityName: String) {
+        self.cityName = cityName
+        clLocationManager.startUpdatingLocation()
+    }
+    
     
     //Constants
     let WEATHER_URL = "http://api.openweathermap.org/data/2.5/weather"
     let APP_ID = "367537ee9e41d0bbae1a16dbd05e0425"
-
+    
     let clLocationManager = CLLocationManager()
     let weatherDataModel = WeatherDataModel()
+    
+    var cityName : String?
     
     //Pre-linked IBOutlets
     @IBOutlet weak var weatherIcon: UIImageView!
     @IBOutlet weak var cityLabel: UILabel!
     @IBOutlet weak var temperatureLabel: UILabel!
-
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -51,14 +58,14 @@ class WeatherViewController: UIViewController, CLLocationManagerDelegate {
                 print("Response is \(response.data)")
                 let responseJSON : JSON = JSON(response.result.value!)
                 self.updateWeatherData(json: responseJSON)
-            
+                
             }else{
                 print("Network request failed with error:  \(response.error)")
             }
         }
     }
     
-
+    
     
     
     
@@ -66,7 +73,7 @@ class WeatherViewController: UIViewController, CLLocationManagerDelegate {
     
     //MARK: - JSON Parsing
     /***************************************************************/
-   
+    
     
     func updateWeatherData(json: JSON){
         if let temp = json["main"]["temp"].double{
@@ -80,7 +87,7 @@ class WeatherViewController: UIViewController, CLLocationManagerDelegate {
         }
     }
     
-
+    
     
     
     
@@ -110,7 +117,13 @@ class WeatherViewController: UIViewController, CLLocationManagerDelegate {
             let latitude = String(location.coordinate.latitude)
             let longitude = String(location.coordinate.longitude)
             
-            let apiParams : [String : String] = ["lat" : latitude, "lon" : longitude, "appid" : APP_ID]
+            var apiParams : [String : String] = [:]
+            if let userEnteredCity = cityName {
+                apiParams = ["q": userEnteredCity, "appid" : APP_ID]
+            }else{
+                apiParams = ["lat" : latitude, "lon" : longitude, "appid" : APP_ID]
+            }
+            
             getWeatherData(params: apiParams)
             
         }
@@ -123,18 +136,14 @@ class WeatherViewController: UIViewController, CLLocationManagerDelegate {
     
     
     
-
-    
-    //MARK: - Change City Delegate methods
-    /***************************************************************/
-    
-    
-    //Write the userEnteredANewCityName Delegate method here:
-    
-
     
     //Write the PrepareForSegue Method here
-    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "changeCityName" {
+            let destinationVc = segue.destination as! ChangeCityViewController
+            destinationVc.delegate = self
+        }
+    }
     
     
     
